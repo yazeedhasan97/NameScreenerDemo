@@ -1,0 +1,18 @@
+{
+  "database": {
+      "delicate": "postgresql",
+      "database": "postgres",
+      "host": "localhost",
+      "port": 5432,
+      "username": "postgres",
+      "password": "postgres",
+      "query": null,
+      "stream": false,
+      "echo": false,
+      "kerberos": null,
+      "pool_size": 20,
+      "max_overflow": 5,
+      "pool_timeout": 15,
+      "pool_recycle": 300
+  }
+}
