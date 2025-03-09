@@ -85,7 +85,8 @@ class APIService:
 
     def run(self):
         """Starts the Flask API server."""
-        self.app.run(debug=True)
+        # self.app.run(debug=True)
+        self.app.run(host="0.0.0.0", port=5000,) #  debug=False,  use_reloader=False
 
 
 def cli() -> Namespace:
