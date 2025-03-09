@@ -16,7 +16,7 @@ from utilities.utils import load_json_file
 class APIService:
     """Flask API Service for processing names."""
 
-    def __init__(self, factory, logger: MultipurposeLogger):
+    def __init__(self, factory, logger: MultipurposeLogger = None):
         self.app = Flask(__name__)
         self._factory = factory
         self._logger = logger if logger else logging.getLogger(__file__)
