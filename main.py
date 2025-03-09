@@ -1,8 +1,9 @@
 import os
 from argparse import ArgumentParser, Namespace
 
-from controllers.consts import Language
-from controllers.screeners import NameScreener
+
+# from controllers.screeners import NameScreener
+# from controllers.translators import NameTranslator
 from models.db import get_db_hook
 from utilities.loggings import MultipurposeLogger
 from utilities.utils import load_json_file
@@ -19,31 +20,34 @@ def main():
         create=True
     )
 
-    customers = [
-        ("John Doe", "John", "Doe", "", 2, "hash1"),
-        ("Jane Smith", "Jane", "Smith", "", 2, "hash2"),
-        ("Mohammed Ali", "Mohammed", "Ali", "", 2, "hash3"),
-        ("Johan Doh", "Johan", "Doh", "", 2, "hash4"),
-        ("Jean Smitt", "Jean", "Smitt", "", 2, "hash5"),
-    ]
-
-    screener = NameScreener(
-        logger=logger,
-        factory=factory,
-        connection=connection
-    )
-    lst = []
-    for name in customers:
-        lst.extend(screener.runner(
-            name=name,
-            language=args.language
-        ))
-
-    if lst:
-        print("Potential Matches Found:")
-        print(lst)
-    else:
-        print("No matches found.")
+    # screener = NameScreener(
+    #     logger=logger,
+    #     factory=factory,
+    #     connection=connection
+    # )
+    #
+    # translator = NameTranslator()
+    #
+    # lst = []
+    # for name in args.customers:
+    #     translated_name = translator.translate(name)
+    #     # lst.extend(screener.runner(
+    #     #     name=translated_name,
+    #     #     language=args.language
+    #     # ))
+    #     print("-" * 50)
+    #     print(f"Translated Name: {translated_name}")
+    #     print("-" * 50)
+    #
+    #     lst.extend(screener.ai_runner(
+    #         name=translated_name,
+    #     ))
+    #
+    # if lst:
+    #     print("Potential Matches Found:")
+    #     print(lst)
+    # else:
+    #     print("No matches found.")
 
     factory.close()
     connection.close()
@@ -65,17 +69,18 @@ def cli() -> Namespace:
         default='logs',
         help="The path to the generated logs directory.",
     )
-    parser.add_argument(
-        "--language",
-        type=Language,
-        default=Language.ENGLISH,
-        help="Screen the name based on this language.",
-    )
     # parser.add_argument(
-    #     "--date",
-    #     type=int,
-    #     help="The run_for date in the format YYYYMMDD.",
+    #     "--language",
+    #     type=Language,
+    #     default=Language.ENGLISH,
+    #     help="Screen the name based on this language.",
     # )
+    parser.add_argument(
+        "--customers",
+        type=str,
+        nargs='+',
+        help="The run_for date in the format YYYYMMDD.",
+    )
     return parser.parse_args()
 
 

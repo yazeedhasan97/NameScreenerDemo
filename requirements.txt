@@ -20,3 +20,13 @@ urllib3
 requests
 fuzzywuzzy
 python-Levenshtein
+#
+transformers
+torch
+sentencepiece
+fastapi
+uvicorn
+asyncpg
+langdetect
+pydantic
+Flask
