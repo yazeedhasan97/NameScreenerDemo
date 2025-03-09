@@ -32,12 +32,12 @@ class NameScreener:
         self.tokenizer = AutoTokenizer.from_pretrained(
             _model_name,  use_auth_token=use_auth_token,
             # timeout=60,  # Increase timeout to 60 seconds
-            resume_download=True,  # Resume failed downloads instead of restarting
+            # resume_download=True,  # Resume failed downloads instead of restarting
         )
         self.model = AutoModel.from_pretrained(
             _model_name, use_auth_token=use_auth_token,
             # timeout=60,  # Increase timeout to 60 seconds
-            resume_download=True,  # Resume failed downloads instead of restarting
+            # resume_download=True,  # Resume failed downloads instead of restarting
         )
 
     def runner(self, name, threshold=0.5, sanctions: list[str] = None,):

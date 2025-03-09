@@ -20,7 +20,7 @@ urllib3
 requests
 fuzzywuzzy
 python-Levenshtein
-#
+sacremoses
 transformers
 torch
 sentencepiece
