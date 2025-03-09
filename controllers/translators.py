@@ -30,12 +30,12 @@ class NameTranslator:
         # Load Arabic-to-English model and tokenizer
         self.tokenizer_ar_en = MarianTokenizer.from_pretrained(
             self.ARABIC_MODEL_NAME,
-            timeout=60,  # Increase timeout to 60 seconds
+            # timeout=60,  # Increase timeout to 60 seconds
             resume_download=True,  # Resume failed downloads instead of restarting
         )
         self.model_ar_en = MarianMTModel.from_pretrained(
             self.ARABIC_MODEL_NAME,
-            timeout=60,  # Increase timeout to 60 seconds
+            # timeout=60,  # Increase timeout to 60 seconds
             resume_download=True,  # Resume failed downloads instead of restarting
         ).to(self.device)
 
