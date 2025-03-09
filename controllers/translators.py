@@ -28,8 +28,16 @@ class NameTranslator:
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
 
         # Load Arabic-to-English model and tokenizer
-        self.tokenizer_ar_en = MarianTokenizer.from_pretrained(self.ARABIC_MODEL_NAME)
-        self.model_ar_en = MarianMTModel.from_pretrained(self.ARABIC_MODEL_NAME).to(self.device)
+        self.tokenizer_ar_en = MarianTokenizer.from_pretrained(
+            self.ARABIC_MODEL_NAME,
+            timeout=60,  # Increase timeout to 60 seconds
+            resume_download=True,  # Resume failed downloads instead of restarting
+        )
+        self.model_ar_en = MarianMTModel.from_pretrained(
+            self.ARABIC_MODEL_NAME,
+            timeout=60,  # Increase timeout to 60 seconds
+            resume_download=True,  # Resume failed downloads instead of restarting
+        ).to(self.device)
 
         # # Load English-to-Arabic model and tokenizer
         # self.tokenizer_en_ar = MarianTokenizer.from_pretrained(self.ENGLISH_MODEL_NAME)
