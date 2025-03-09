@@ -71,7 +71,7 @@ class APIService:
 
     def run(self):
         """Starts the Flask API server."""
-        self.app.run(host="0.0.0.0", port=5000)
+        self.app.run(host="0.0.0.0", port=5000, debug=True)
 
 
 def main():
