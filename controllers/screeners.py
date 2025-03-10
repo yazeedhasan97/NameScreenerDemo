@@ -36,6 +36,13 @@ class NameScreener:
             # timeout=60,  # Increase timeout to 60 seconds
             # resume_download=True,  # Resume failed downloads instead of restarting
         )
+
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+
+        if self.tokenizer.eos_token is None:
+            self.tokenizer.add_special_tokens({'pad_token': '[PAD]'})
+
         self.model = AutoModel.from_pretrained(
             _model_name, use_auth_token=use_auth_token,
             # timeout=60,  # Increase timeout to 60 seconds
@@ -87,9 +94,8 @@ class NameScreener:
                     embeddings[0].unsqueeze(0), embeddings[1].unsqueeze(0)
                 ).item()
                 # Check if the similarity exceeds the threshold
-                self._logger.info(f"{name} -- {sanc_name} || {similarity_score}/{threshold}",)
+                self._logger.info(f"{name} -- {sanc_name} || {similarity_score}/{threshold}", )
                 if similarity_score >= threshold:
-
                     matches.append([sanc_name, similarity_score, sanction.uid])
             except Exception as e:
                 self._logger.info(f"Error processing customer {name}: {e}")
