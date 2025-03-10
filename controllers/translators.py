@@ -1,3 +1,4 @@
+import logging
 import re
 from transformers import MarianMTModel, MarianTokenizer
 import torch
@@ -17,7 +18,7 @@ class NameTranslator:
     ARABIC_MODEL_NAME = "Helsinki-NLP/opus-mt-tc-big-ar-en"
     ENGLISH_MODEL_NAME = "Helsinki-NLP/opus-mt-tc-big-en-ar"
 
-    def __init__(self, device: str = None):
+    def __init__(self, device: str = None, logger: logging.Logger = None):
         """
         Initialize models and tokenizers.
 

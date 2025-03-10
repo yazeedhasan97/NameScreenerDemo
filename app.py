@@ -12,6 +12,16 @@ from models.models import Sanctions
 from utilities.loggings import MultipurposeLogger
 from utilities.utils import load_json_file
 
+import logging
+
+logging.basicConfig(
+    filename="logs/api_service.log",
+    level=logging.DEBUG,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+glogger = logging.getLogger(__name__)  # Use this logger in your app
+
 
 class APIService:
     """Flask API Service for processing names."""
@@ -19,9 +29,9 @@ class APIService:
     def __init__(self, factory, logger: MultipurposeLogger = None):
         self.app = Flask(__name__)
         self._factory = factory
-        self._logger = logger if logger else logging.getLogger(__file__)
-        self._screener = NameScreener()
-        self._translator = NameTranslator()
+        self._logger = logger if logger else glogger
+        self._screener = NameScreener(logger=self._logger)
+        self._translator = NameTranslator(logger=self._logger)
         self._setup_routes()
 
     def _validate_parameters(self, type, name, threshold):
@@ -74,7 +84,7 @@ class APIService:
 
     def run(self):
         """Starts the Flask API server."""
-        self.app.run(host="0.0.0.0", port=5000)#, debug=True)
+        self.app.run(host="0.0.0.0", port=5000)  # , debug=True)
 
 
 def main():
