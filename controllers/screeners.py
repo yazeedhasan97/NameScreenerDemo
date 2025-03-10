@@ -32,7 +32,7 @@ class NameScreener:
 
         _model_name = "NECOUDBFM/Jellyfish-13B"
         self.tokenizer = AutoTokenizer.from_pretrained(
-            _model_name,  use_auth_token=use_auth_token,
+            _model_name, use_auth_token=use_auth_token,
             # timeout=60,  # Increase timeout to 60 seconds
             # resume_download=True,  # Resume failed downloads instead of restarting
         )
@@ -42,7 +42,7 @@ class NameScreener:
             # resume_download=True,  # Resume failed downloads instead of restarting
         )
 
-    def runner(self, name, threshold=0.5, sanctions: list[str] = None,):
+    def runner(self, name, threshold=0.5, sanctions: list[str] = None, ):
 
         sanctions = sanctions.copy() if sanctions else []
 
@@ -56,7 +56,7 @@ class NameScreener:
                 self._logger.info(f"Error processing customer {name}: {e}")
         return matches
 
-    def ai_runner(self, name, threshold=0.5, sanctions: list[Sanctions] = None,):
+    def ai_runner(self, name, threshold=0.5, sanctions: list[Sanctions] = None, ):
 
         sanctions = sanctions.copy() if sanctions else []
 
@@ -67,10 +67,10 @@ class NameScreener:
 
         matches = []
         for sanction in sanctions:
-            print(sanction, threshold)
             try:
                 # Tokenize the input name and the sanction entity
                 sanc_name = f"{sanction.first_name} {sanction.last_name}"
+
                 inputs = self.tokenizer(
                     [name.lower(), sanc_name.lower()],
                     return_tensors="pt",
@@ -86,7 +86,9 @@ class NameScreener:
                     embeddings[0].unsqueeze(0), embeddings[1].unsqueeze(0)
                 ).item()
                 # Check if the similarity exceeds the threshold
+                print(f"{name} -- {sanc_name} || {similarity_score}/{threshold}")
                 if similarity_score >= threshold:
+
                     matches.append([sanc_name, similarity_score, sanction.uid])
             except Exception as e:
                 self._logger.info(f"Error processing customer {name}: {e}")
