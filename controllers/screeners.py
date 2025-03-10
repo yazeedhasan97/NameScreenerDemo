@@ -75,7 +75,8 @@ class NameScreener:
                     [name.lower(), sanc_name.lower()],
                     return_tensors="pt",
                     padding=True,
-                    truncation=True
+                    truncation=True,
+                    max_length=self.tokenizer.model_max_length if self.tokenizer.model_max_length else 512
                 )
                 # Generate embeddings using mean pooling over token embeddings
                 with torch.no_grad():
