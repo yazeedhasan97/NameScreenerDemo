@@ -14,8 +14,12 @@ from utilities.utils import load_json_file
 
 import logging
 
+logfile = "logs/api_service.log"
+if os.path.exists(logfile):
+    os.remove(logfile)
+
 logging.basicConfig(
-    filename="logs/api_service.log",
+    filename=logfile,
     level=logging.DEBUG,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
