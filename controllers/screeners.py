@@ -79,7 +79,7 @@ class NameScreener:
 
             try:
                 # Tokenize the input name and the sanction entity
-                if not isinstance(sanction.first_name, str) or not isinstance(sanction.last_name, str):
+                if not isinstance(sanction.first_name, str) and not isinstance(sanction.last_name, str):
                     self._logger.warning(f"Invalid sanction name: {sanction}")
                     continue
 
@@ -90,7 +90,8 @@ class NameScreener:
                     return_tensors="pt",
                     padding=True,
                     truncation=True,
-                    max_length=self.tokenizer.model_max_length if self.tokenizer.model_max_length else 512
+                    # max_length=self.tokenizer.model_max_length if self.tokenizer.model_max_length else 128
+                    max_length=512
                 )
                 self._logger.info(f"Tokenized inputs for {name}: {inputs}")
                 inputs = {key: value.to(torch.int32) for key, value in inputs.items()}
