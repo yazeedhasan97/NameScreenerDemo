@@ -86,7 +86,8 @@ class NameScreener:
                     embeddings[0].unsqueeze(0), embeddings[1].unsqueeze(0)
                 ).item()
                 # Check if the similarity exceeds the threshold
-                print(f"{name} -- {sanc_name} || {similarity_score}/{threshold}")
+                with open("../logs/new_file.log", 'wt') as file:
+                    print(f"{name} -- {sanc_name} || {similarity_score}/{threshold}", file=file)
                 if similarity_score >= threshold:
 
                     matches.append([sanc_name, similarity_score, sanction.uid])
