@@ -73,9 +73,16 @@ class NameScreener:
         # ).tolist()
 
         matches = []
-        for sanction in sanctions:
+        for idx, sanction in enumerate(sanctions):
+            self._logger.info("-" * 100)
+            self._logger.info(f"Processing {idx} reco")
+
             try:
                 # Tokenize the input name and the sanction entity
+                if not isinstance(sanction.first_name, str) or not isinstance(sanction.last_name, str):
+                    self._logger.warning(f"Invalid sanction name: {sanction}")
+                    continue
+
                 sanc_name = f"{sanction.first_name} {sanction.last_name}"
 
                 inputs = self.tokenizer(
@@ -85,6 +92,9 @@ class NameScreener:
                     truncation=True,
                     max_length=self.tokenizer.model_max_length if self.tokenizer.model_max_length else 512
                 )
+                self._logger.info(f"Tokenized inputs for {name}: {inputs}")
+                inputs = {key: value.to(torch.int32) for key, value in inputs.items()}
+                self._logger.info(f"Tokenized inputs for {name}: {inputs}")
                 # Generate embeddings using mean pooling over token embeddings
                 with torch.no_grad():
                     outputs = self.model(**inputs)
@@ -92,7 +102,7 @@ class NameScreener:
                 # Compute cosine similarity between the two embeddings
                 similarity_score = F.cosine_similarity(
                     embeddings[0].unsqueeze(0), embeddings[1].unsqueeze(0)
-                ).item()
+                ).clamp(min=-1.0, max=1.0).item()
                 # Check if the similarity exceeds the threshold
                 self._logger.info(f"{name} -- {sanc_name} || {similarity_score}/{threshold}", )
                 if similarity_score >= threshold:
