@@ -61,7 +61,7 @@ class APIService:
             # ).all()
 
             sanctions = self._factory.session.query(Sanctions).all()
-            print(sanctions)
+            # print(sanctions)
 
             matches = self._screener.ai_runner(name=name, sanctions=sanctions)
 
