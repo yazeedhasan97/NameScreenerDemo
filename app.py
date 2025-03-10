@@ -67,7 +67,7 @@ class APIService:
 
             return jsonify({
                 "name": name,
-                "language": language,
+                # "language": language,
                 # "hash": search_hash,
                 "matches": matches
             })

@@ -67,10 +67,12 @@ class NameScreener:
 
         matches = []
         for sanction in sanctions:
+            print(sanction, threshold)
             try:
                 # Tokenize the input name and the sanction entity
+                sanc_name = f"{sanction.first_name} {sanction.last_name}"
                 inputs = self.tokenizer(
-                    [name.lower(), f"{sanction.first_name} {sanction.last_name}".lower()],
+                    [name.lower(), sanc_name.lower()],
                     return_tensors="pt",
                     padding=True,
                     truncation=True
@@ -85,7 +87,7 @@ class NameScreener:
                 ).item()
                 # Check if the similarity exceeds the threshold
                 if similarity_score >= threshold:
-                    matches.append([sanction, similarity_score])
+                    matches.append([sanc_name, similarity_score, sanction.uid])
             except Exception as e:
                 self._logger.info(f"Error processing customer {name}: {e}")
         return matches
