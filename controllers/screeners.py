@@ -9,6 +9,8 @@ from transformers import AutoTokenizer, AutoModel
 import torch.nn.functional as F
 import torch
 
+from models.models import Sanctions
+
 use_auth_token = None
 
 
@@ -54,7 +56,7 @@ class NameScreener:
                 self._logger.info(f"Error processing customer {name}: {e}")
         return matches
 
-    def ai_runner(self, name, threshold=0.5, sanctions: list[str] = None,):
+    def ai_runner(self, name, threshold=0.5, sanctions: list[Sanctions] = None,):
 
         sanctions = sanctions.copy() if sanctions else []
 
@@ -67,7 +69,12 @@ class NameScreener:
         for sanction in sanctions:
             try:
                 # Tokenize the input name and the sanction entity
-                inputs = self.tokenizer([name, sanction], return_tensors="pt", padding=True, truncation=True)
+                inputs = self.tokenizer(
+                    [name.lower(), f"{sanction.first_name} {sanction.last_name}".lower()],
+                    return_tensors="pt",
+                    padding=True,
+                    truncation=True
+                )
                 # Generate embeddings using mean pooling over token embeddings
                 with torch.no_grad():
                     outputs = self.model(**inputs)
@@ -78,7 +85,7 @@ class NameScreener:
                 ).item()
                 # Check if the similarity exceeds the threshold
                 if similarity_score >= threshold:
-                    matches.append(sanction)
+                    matches.append([sanction, similarity_score])
             except Exception as e:
                 self._logger.info(f"Error processing customer {name}: {e}")
         return matches

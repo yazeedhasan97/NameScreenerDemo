@@ -54,18 +54,21 @@ class APIService:
             if language == 'ar':
                 name = self._translator.translate(name)
 
-            search_hash = name_handler.hash(name=name, type=type)
+            # search_hash = name_handler.hash(name=name, type=type)
 
-            sanctions = self._factory.session.query(Sanctions).filter(
-                Sanctions.search_hash == str(search_hash)
-            ).all()
+            # sanctions = self._factory.session.query(Sanctions).filter(
+            #     Sanctions.search_hash == str(search_hash)
+            # ).all()
+
+            sanctions = self._factory.session.query(Sanctions).all()
+            print(sanctions)
 
             matches = self._screener.ai_runner(name=name, sanctions=sanctions)
 
             return jsonify({
                 "name": name,
                 "language": language,
-                "hash": search_hash,
+                # "hash": search_hash,
                 "matches": matches
             })
 
