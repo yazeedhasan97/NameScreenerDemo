@@ -154,20 +154,27 @@ class NameScreener:
 
     def distl_roberta_runner(self, name: str, sanctions, threshold: float = 0.5):
         matches = []
-
         for idx, sanction in enumerate(sanctions):
             self._logger.info("-" * 100)
             self._logger.info(f"Processing {idx} reco")
             sanc_name = f"{sanction.first_name} {sanction.last_name}"
             result = self.classifier({"text": name, "text_pair": sanc_name})
 
-            # Iterate over the output to find the score corresponding to the positive (match) class.
+            # Expecting result[0] to be a list of dictionaries with keys "label" and "score".
+            # If not, log an error and skip this record.
+            if not (result and isinstance(result[0], list)):
+                self._logger.error(f"Unexpected classifier output format for sanction {sanc_name}: {result}")
+                continue
+
             match_score = None
-            for score_dict in result[0]:
-                # Adjust the label names if needed.
-                if score_dict.get('label') in ['LABEL_1', '1', 'match']:
-                    match_score = score_dict.get('score')
-                    break
+            for score_obj in result[0]:
+                if isinstance(score_obj, dict):
+                    # Adjust label names as needed. Here we check for common labels indicating a positive match.
+                    if score_obj.get('label') in ['LABEL_1', '1', 'match']:
+                        match_score = score_obj.get('score')
+                        break
+                else:
+                    self._logger.error(f"Classifier returned a non-dictionary output: {score_obj}")
 
             if match_score is None:
                 self._logger.warning(f"No positive label found for record {idx} with sanction {sanc_name}")
@@ -177,4 +184,5 @@ class NameScreener:
                 matches.append([sanc_name, match_score, sanction.uid])
 
         return matches
+
 
