@@ -8,6 +8,7 @@ from transformers import AutoTokenizer, AutoModel
 # from models.models import Sanctions
 import torch.nn.functional as F
 import torch
+from torch.nn.functional import softmax
 
 from models.models import Sanctions
 
@@ -15,6 +16,9 @@ use_auth_token = None
 
 
 class NameScreener:
+    # _model_name = "NECOUDBFM/Jellyfish-13B"
+    _model_name = "Launchpad/ditto"
+
     def __init__(self, logger: logging.Logger = None):
         # self._factory = factory
         # self._connection = connection
@@ -30,21 +34,21 @@ class NameScreener:
         # self.translation_tokenizer = AutoTokenizer.from_pretrained(_model_name, use_auth_token=use_auth_token)
         # self.translation_model = AutoModelForSeq2SeqLM.from_pretrained(_model_name, use_auth_token=use_auth_token)
 
-        _model_name = "NECOUDBFM/Jellyfish-13B"
         self.tokenizer = AutoTokenizer.from_pretrained(
-            _model_name, use_auth_token=use_auth_token,
+            self._model_name, use_auth_token=use_auth_token,
             # timeout=60,  # Increase timeout to 60 seconds
             # resume_download=True,  # Resume failed downloads instead of restarting
         )
 
-        if self.tokenizer.pad_token is None:
-            self.tokenizer.pad_token = self.tokenizer.eos_token
-
-        if self.tokenizer.eos_token is None:
-            self.tokenizer.add_special_tokens({'pad_token': '[PAD]'})
+        # for the jelly fish model
+        # if self.tokenizer.pad_token is None:
+        #     self.tokenizer.pad_token = self.tokenizer.eos_token
+        #
+        # if self.tokenizer.eos_token is None:
+        #     self.tokenizer.add_special_tokens({'pad_token': '[PAD]'})
 
         self.model = AutoModel.from_pretrained(
-            _model_name, use_auth_token=use_auth_token,
+            self._model_name, use_auth_token=use_auth_token,
             # timeout=60,  # Increase timeout to 60 seconds
             # resume_download=True,  # Resume failed downloads instead of restarting
         )
@@ -63,7 +67,7 @@ class NameScreener:
                 self._logger.info(f"Error processing customer {name}: {e}")
         return matches
 
-    def ai_runner(self, name, threshold=0.5, sanctions: list[Sanctions] = None, ):
+    def jelly_fish_runner(self, name, threshold=0.5, sanctions: list[Sanctions] = None, ):
 
         sanctions = sanctions.copy() if sanctions else []
 
@@ -110,4 +114,40 @@ class NameScreener:
                     matches.append([sanc_name, similarity_score, sanction.uid])
             except Exception as e:
                 self._logger.info(f"Error processing customer {name}: {e}")
+        return matches
+
+    def ditto_runner(self, name: str, threshold=0.5, sanctions: list[Sanctions] = None, ):
+        """
+        Determines if two entity descriptions match using the Ditto model.
+
+        Args:
+            text1 (str): Serialized text representation of the first entity.
+            text2 (str): Serialized text representation of the second entity.
+            model_name (str): Hugging Face model identifier (default: "Launchpad/ditto").
+
+        Returns:
+            bool: True if entities match, False otherwise.
+        """
+        # Load tokenizer and model
+        # tokenizer = AutoTokenizer.from_pretrained(model_name)
+        # model = AutoModelForSequenceClassification.from_pretrained(model_name)
+        matches = []
+        for idx, sanction in enumerate(sanctions):
+            self._logger.info("-" * 100)
+            self._logger.info(f"Processing {idx} reco")
+            sanc_name = f"{sanction.first_name} {sanction.last_name}"
+            # Tokenize the input pair
+            inputs = self.tokenizer(name, sanc_name, return_tensors="pt", truncation=True)
+
+            # Run inference
+            with torch.no_grad():
+                outputs = self.model(**inputs)
+                logits = outputs.logits
+                # Calculate probability for class 1 (match)
+                probabilities = softmax(logits, dim=1)
+                similarity_score = probabilities[0, 1].item()
+
+            if similarity_score >= threshold:
+                matches.append([sanc_name, similarity_score, sanction.uid])
+
         return matches

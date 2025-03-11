@@ -77,7 +77,7 @@ class APIService:
             sanctions = self._factory.session.query(Sanctions).all()
             # print(sanctions)
 
-            matches = self._screener.ai_runner(name=name, sanctions=sanctions)
+            matches = self._screener.ditto_runner(name=name, sanctions=sanctions)
 
             return jsonify({
                 "name": name,
