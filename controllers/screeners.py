@@ -2,7 +2,7 @@ import logging
 
 # import pandas as pd
 from fuzzywuzzy import fuzz
-from transformers import AutoTokenizer, AutoModel, AutoModelForSequenceClassification
+from transformers import AutoTokenizer, AutoModel, AutoModelForSequenceClassification, pipeline
 
 # from controllers.consts import THRESHOLD
 # from models.models import Sanctions
@@ -17,7 +17,8 @@ use_auth_token = None
 
 class NameScreener:
     # _model_name = "NECOUDBFM/Jellyfish-13B"
-    _model_name = "Launchpad/ditto"
+    # _model_name = "Launchpad/ditto"
+    _model_name = "cross-encoder/quora-distilroberta-base"
 
     def __init__(self, logger: logging.Logger = None):
         # self._factory = factory
@@ -34,11 +35,11 @@ class NameScreener:
         # self.translation_tokenizer = AutoTokenizer.from_pretrained(_model_name, use_auth_token=use_auth_token)
         # self.translation_model = AutoModelForSeq2SeqLM.from_pretrained(_model_name, use_auth_token=use_auth_token)
 
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            self._model_name, use_auth_token=use_auth_token,
-            # timeout=60,  # Increase timeout to 60 seconds
-            # resume_download=True,  # Resume failed downloads instead of restarting
-        )
+        # self.tokenizer = AutoTokenizer.from_pretrained(
+        #     self._model_name, use_auth_token=use_auth_token,
+        #     # timeout=60,  # Increase timeout to 60 seconds
+        #     # resume_download=True,  # Resume failed downloads instead of restarting
+        # )
         # tokenizer = AutoTokenizer.from_pretrained(model_name)
 
         # for the jelly fish model
@@ -48,12 +49,18 @@ class NameScreener:
         # if self.tokenizer.eos_token is None:
         #     self.tokenizer.add_special_tokens({'pad_token': '[PAD]'})
 
-        # self.model = AutoModel.from_pretrained(
-        self.model = AutoModelForSequenceClassification.from_pretrained(
-            self._model_name, use_auth_token=use_auth_token,
-            trust_remote_code=True,
-            # timeout=60,  # Increase timeout to 60 seconds
-            # resume_download=True,  # Resume failed downloads instead of restarting
+        # # self.model = AutoModel.from_pretrained(
+        # self.model = AutoModelForSequenceClassification.from_pretrained(
+        #     self._model_name, use_auth_token=use_auth_token,
+        #     trust_remote_code=True,
+        #     # timeout=60,  # Increase timeout to 60 seconds
+        #     # resume_download=True,  # Resume failed downloads instead of restarting
+        # )
+
+        self.classifier = pipeline(
+            "text-classification",
+            model=self._model_name,
+            return_all_scores=True
         )
 
     def runner(self, name, threshold=0.5, sanctions: list[str] = None, ):
@@ -140,6 +147,21 @@ class NameScreener:
                 probabilities = softmax(logits, dim=1)
                 similarity_score = probabilities[0, 1].item()
 
+            if similarity_score >= threshold:
+                matches.append([sanc_name, similarity_score, sanction.uid])
+
+        return matches
+
+    def distl_roberta_runner(self, name: str, sanctions, threshold: float = 0.5) :
+        matches = []
+
+        for idx, sanction in enumerate(sanctions):
+            self._logger.info("-" * 100)
+            self._logger.info(f"Processing {idx} reco")
+            sanc_name = f"{sanction.first_name} {sanction.last_name}"
+            result = self.classifier({"text": name, "text_pair": sanc_name})
+            # Assuming index 1 corresponds to the match class.
+            similarity_score = result[0][1]['score']
             if similarity_score >= threshold:
                 matches.append([sanc_name, similarity_score, sanction.uid])
 
