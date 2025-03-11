@@ -3,6 +3,7 @@ import logging
 # import pandas as pd
 from fuzzywuzzy import fuzz
 from transformers import AutoTokenizer, AutoModel, AutoModelForSequenceClassification, pipeline
+from sentence_transformers import SentenceTransformer, util
 
 # from controllers.consts import THRESHOLD
 # from models.models import Sanctions
@@ -18,7 +19,8 @@ use_auth_token = None
 class NameScreener:
     # _model_name = "NECOUDBFM/Jellyfish-13B"
     # _model_name = "Launchpad/ditto"
-    _model_name = "cross-encoder/quora-distilroberta-base"
+    # _model_name = "cross-encoder/quora-distilroberta-base"
+    _model_name = "sentence-transformers/all-MiniLM-L6-v2"
 
     def __init__(self, logger: logging.Logger = None):
         # self._factory = factory
@@ -57,11 +59,13 @@ class NameScreener:
         #     # resume_download=True,  # Resume failed downloads instead of restarting
         # )
 
-        self.classifier = pipeline(
-            "text-classification",
-            model=self._model_name,
-            return_all_scores=True
-        )
+        self.model = SentenceTransformer(self._model_name)
+
+        # self.classifier = pipeline(
+        #     "text-classification",
+        #     model=self._model_name,
+        #     return_all_scores=True
+        # )
 
     def runner(self, name, threshold=0.5, sanctions: list[str] = None, ):
 
@@ -160,28 +164,65 @@ class NameScreener:
             sanc_name = f"{sanction.first_name} {sanction.last_name}"
             result = self.classifier({"text": name, "text_pair": sanc_name})
 
-            # Expecting result[0] to be a list of dictionaries with keys "label" and "score".
-            # If not, log an error and skip this record.
-            if not (result and isinstance(result[0], list)):
-                self._logger.error(f"Unexpected classifier output format for sanction {sanc_name}: {result}")
-                continue
-
+            # result[0] may be a list with one or two dictionaries.
+            # If only one is returned, infer the positive class probability:
             match_score = None
-            for score_obj in result[0]:
-                if isinstance(score_obj, dict):
-                    # Adjust label names as needed. Here we check for common labels indicating a positive match.
-                    if score_obj.get('label') in ['LABEL_1', '1', 'match']:
-                        match_score = score_obj.get('score')
-                        break
+            if len(result[0]) == 1:
+                top = result[0][0]
+                label = top.get('label', '').upper()
+                score = top.get('score', 0.0)
+                # If the model returns the negative label, assume positive prob is (1 - score)
+                if label in ['LABEL_1', '1', 'MATCH']:
+                    match_score = score
+                elif label in ['LABEL_0', '0', 'NON-MATCH']:
+                    match_score = 1 - score
                 else:
-                    self._logger.error(f"Classifier returned a non-dictionary output: {score_obj}")
+                    self._logger.error(f"Unexpected label '{label}' for sanction {sanc_name}")
+                    continue
+            else:
+                # When multiple dictionaries are returned, search for the positive label.
+                for score_dict in result[0]:
+                    if isinstance(score_dict, dict) and score_dict.get('label', '').upper() in ['LABEL_1', '1',
+                                                                                                'MATCH']:
+                        match_score = score_dict.get('score')
+                        break
 
             if match_score is None:
                 self._logger.warning(f"No positive label found for record {idx} with sanction {sanc_name}")
                 continue
 
+            self._logger.info(f"Match score for {sanc_name}: {match_score:.3f}")
             if match_score >= threshold:
                 matches.append([sanc_name, match_score, sanction.uid])
+
+        return matches
+
+    def sbert_runner(self, name: str, sanctions, threshold: float = 0.7):
+        """
+        Matches a given name against a list of sanctions using Sentence-BERT.
+
+        Args:
+            name (str): The input entity description.
+            sanctions (list): A list of sanction objects with attributes first_name, last_name, and uid.
+            threshold (float): Cosine similarity threshold for a match.
+
+        Returns:
+            list: A list of matches as [sanction_name, similarity_score, sanction.uid].
+        """
+        matches = []
+        # Encode the input name only once
+        name_embedding = self.model.encode(name, convert_to_tensor=True)
+
+        for idx, sanction in enumerate(sanctions):
+            sanc_name = f"{sanction.first_name} {sanction.last_name}"
+            # Encode each sanction name
+            sanction_embedding = self.model.encode(sanc_name, convert_to_tensor=True)
+            # Compute cosine similarity between the two embeddings
+            similarity = util.cos_sim(name_embedding, sanction_embedding).item()
+
+            self._logger.info(f"Processing record {idx}: {sanc_name} -> similarity: {similarity:.3f}")
+            if similarity >= threshold:
+                matches.append([sanc_name, similarity, sanction.uid])
 
         return matches
 
