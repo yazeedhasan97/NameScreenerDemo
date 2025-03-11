@@ -152,7 +152,7 @@ class NameScreener:
 
         return matches
 
-    def distl_roberta_runner(self, name: str, sanctions, threshold: float = 0.5) :
+    def distl_roberta_runner(self, name: str, sanctions, threshold: float = 0.5):
         matches = []
 
         for idx, sanction in enumerate(sanctions):
@@ -160,9 +160,21 @@ class NameScreener:
             self._logger.info(f"Processing {idx} reco")
             sanc_name = f"{sanction.first_name} {sanction.last_name}"
             result = self.classifier({"text": name, "text_pair": sanc_name})
-            # Assuming index 1 corresponds to the match class.
-            similarity_score = result[0][1]['score']
-            if similarity_score >= threshold:
-                matches.append([sanc_name, similarity_score, sanction.uid])
+
+            # Iterate over the output to find the score corresponding to the positive (match) class.
+            match_score = None
+            for score_dict in result[0]:
+                # Adjust the label names if needed.
+                if score_dict.get('label') in ['LABEL_1', '1', 'match']:
+                    match_score = score_dict.get('score')
+                    break
+
+            if match_score is None:
+                self._logger.warning(f"No positive label found for record {idx} with sanction {sanc_name}")
+                continue
+
+            if match_score >= threshold:
+                matches.append([sanc_name, match_score, sanction.uid])
 
         return matches
+
