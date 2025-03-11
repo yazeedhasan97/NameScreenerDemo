@@ -2,7 +2,7 @@ import logging
 
 # import pandas as pd
 from fuzzywuzzy import fuzz
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoTokenizer, AutoModel, AutoModelForSequenceClassification
 
 # from controllers.consts import THRESHOLD
 # from models.models import Sanctions
@@ -39,6 +39,7 @@ class NameScreener:
             # timeout=60,  # Increase timeout to 60 seconds
             # resume_download=True,  # Resume failed downloads instead of restarting
         )
+        # tokenizer = AutoTokenizer.from_pretrained(model_name)
 
         # for the jelly fish model
         # if self.tokenizer.pad_token is None:
@@ -47,8 +48,10 @@ class NameScreener:
         # if self.tokenizer.eos_token is None:
         #     self.tokenizer.add_special_tokens({'pad_token': '[PAD]'})
 
-        self.model = AutoModel.from_pretrained(
+        # self.model = AutoModel.from_pretrained(
+        self.model = AutoModelForSequenceClassification.from_pretrained(
             self._model_name, use_auth_token=use_auth_token,
+            trust_remote_code=True,
             # timeout=60,  # Increase timeout to 60 seconds
             # resume_download=True,  # Resume failed downloads instead of restarting
         )
@@ -117,17 +120,7 @@ class NameScreener:
         return matches
 
     def ditto_runner(self, name: str, threshold=0.5, sanctions: list[Sanctions] = None, ):
-        """
-        Determines if two entity descriptions match using the Ditto model.
 
-        Args:
-            text1 (str): Serialized text representation of the first entity.
-            text2 (str): Serialized text representation of the second entity.
-            model_name (str): Hugging Face model identifier (default: "Launchpad/ditto").
-
-        Returns:
-            bool: True if entities match, False otherwise.
-        """
         # Load tokenizer and model
         # tokenizer = AutoTokenizer.from_pretrained(model_name)
         # model = AutoModelForSequenceClassification.from_pretrained(model_name)
