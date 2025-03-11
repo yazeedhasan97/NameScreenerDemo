@@ -79,6 +79,7 @@ class APIService:
 
             # matches = self._screener.ditto_runner(name=name, sanctions=sanctions)
             matches = self._screener.distl_roberta_runner(name=name, sanctions=sanctions)
+            matches = self._screener.sbert_runner(name=name, sanctions=sanctions)
 
             return jsonify({
                 "name": name,
